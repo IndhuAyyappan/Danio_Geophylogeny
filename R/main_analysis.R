@@ -21,15 +21,41 @@ library(ape)
 library(phangorn)
 library(DECIPHER)
 library(rgbif)
+library(rentrez)
 
-
-
+# Folder paths (relative)
+dir_raw   <- "data_raw"
+dir_clean <- "data_clean"
+dir_figs  <- "figs"
 
 #### 2. DATA ACQUISITION – SEQUENCES (NCBI) ----
 # (placeholder – we'll fill this section together)
+query <- "Danio[Organism] AND (COI OR CO1)"
+
+seq_search <- entrez_search(
+  db = "nucleotide",
+  term = query,
+  retmax = 500
+)
+#### 2B. FETCH FASTA SEQUENCES ----
+
+# fetch all sequences in FASTA format
+seq_fasta <- entrez_fetch(
+  db = "nucleotide",
+  id = seq_search$ids,
+  rettype = "fasta",
+  retmode = "text"
+)
+# save raw fasta file into data_raw
+fasta_file <- file.path(dir_raw, "danio_coi_raw.fasta")
+write(seq_fasta, file = fasta_file)
 
 #### 3. SEQUENCE QC & ALIGNMENT ----
-# (placeholder)
+# read fasta into R for QC
+danio_raw <- read.FASTA(fasta_file)
+
+length(danio_raw)          
+head(names(danio_raw), 10)
 
 #### 4. PHYLOGENY (MODEL TEST + ML TREE) ----
 # (placeholder)
