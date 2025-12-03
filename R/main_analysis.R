@@ -18,6 +18,8 @@
 # Load required packages
 #uncomment packages that needs to be installed
 #BiocManager::install("ggtree")
+#install.packages(c("maps", "patchwork"))
+# install.packages("geosphere")
 library(tidyverse)
 library(ape)
 library(phangorn)
@@ -27,6 +29,11 @@ library(rentrez)
 library(stringr)
 library(ggtree)
 library(ggplot2)
+library(maps)     
+library(patchwork)
+library(viridis)
+library(dplyr)
+library(geosphere)
 
 # Folder paths (relative)
 dir_raw   <- "data_raw"
@@ -189,20 +196,273 @@ add.scale.bar()
 
 #Now I use ggtree so that the labels are aligned and the x-axis is scaled in substitutions per site. The xlim() gives extra room for the dotted label guides.
 p_tree <- ggtree(tree_plot) +
-  xlim(0, max_d * 1.2) +                    
-  geom_tiplab(align = TRUE,
-              linetype = "dotted",
-              size = 3,
-              hjust = 0) +
-  theme_tree2() +                           
+  geom_tiplab(
+    size  = 2.4,
+    hjust = 0
+  ) +
+  xlim(0, max_d * 1.35) +   # a bit of extra room for labels
+  theme_tree2() +
   xlab("Relative divergence (scaled branch lengths)")
 
 p_tree
-#### 6. MATCH PHYLOGENY + GEOGRAPHY ----
-# (placeholder)
+#### 6. GBIF OCCURRENCE DATA ----
 
-#### 7. VISUALIZATIONS (GEOPHYLOGENY, MAPS, PLOTS) ----
-# (placeholder)
+# In this section I pull occurrence records from GBIF for the same Danio
+# species that I used in the COI phylogeny. The goal is to later link
+# range locations to the tips of the tree.
 
-#### 8. SAVE CLEAN DATA & FIGURES ----
-# (placeholder)
+#### 6A. BUILD SPECIES LIST FROM PHYLOGENY ----
+
+# I use the cleaned QC table (seq_best) to get the full species names
+# that actually made it into the phylogeny (1 sequence per species).
+danio_species <- seq_best %>%
+  dplyr::pull(species_name) %>%
+  unique() %>%
+  sort()
+
+danio_species
+length(danio_species)   # number of Danio species represented
+
+#### 6B. DOWNLOAD GBIF RECORDS PER SPECIES ----
+
+# For each Danio species, I call rgbif::occ_data() and request up to
+# 500 records with coordinates. This is usually plenty for an assignment-scale
+# project and keeps the download manageable.
+gbif_list <- purrr::map(
+  danio_species,
+  ~{
+    message("Downloading GBIF records for: ", .x)
+    rgbif::occ_data(
+      scientificName = .x,
+      hasCoordinate  = TRUE,
+      limit          = 500
+    )$data
+  }
+)
+
+# Combine all species into one data frame and keep track of the name.
+gbif_raw <- dplyr::bind_rows(gbif_list, .id = "species_index") %>%
+  dplyr::mutate(
+    species_name = scientificName   # standardise column name
+  )
+
+dim(gbif_raw)
+dplyr::count(gbif_raw, species_name, name = "n_records_raw")
+
+#### 6C. BASIC GBIF CLEANING ----
+
+# Here I do a light but sensible cleaning step so the downstream maps
+# aren’t dominated by obviously bad points.
+gbif_clean <- gbif_raw %>%
+  # keep only records with valid lat/lon
+  dplyr::filter(!is.na(decimalLongitude),
+                !is.na(decimalLatitude)) %>%
+  # drop the classic (0, 0) "in the ocean" errors
+  dplyr::filter(!(decimalLongitude == 0 & decimalLatitude == 0)) %>%
+  # remove records with very high coordinate uncertainty (> 50 km)
+  dplyr::filter(
+    is.na(coordinateUncertaintyInMeters) |
+      coordinateUncertaintyInMeters <= 50000
+  ) %>%
+  # keep a few sensible basisOfRecord types
+  dplyr::filter(
+    basisOfRecord %in% c(
+      "HUMAN_OBSERVATION",
+      "OBSERVATION",
+      "MATERIAL_SAMPLE",
+      "PRESERVED_SPECIMEN"
+    )
+  ) %>%
+  # keep the columns that will be useful for mapping and summaries
+  dplyr::transmute(
+    species_name,
+    lon  = decimalLongitude,
+    lat  = decimalLatitude,
+    countryCode,
+    year,
+    basisOfRecord,
+    coord_uncert_m = coordinateUncertaintyInMeters
+  )
+
+dim(gbif_clean)
+
+# Quick summary: how many cleaned records per species?
+gbif_summary <- gbif_clean %>%
+  dplyr::count(species_name, name = "n_records_clean") %>%
+  dplyr::arrange(dplyr::desc(n_records_clean))
+
+gbif_summary
+
+#### 6D. SAVE CLEANED GBIF DATA ----
+
+# I save both the cleaned table (all points) and the per-species summary
+# so that I can reuse them later for mapping and for the write-up.
+gbif_clean_file   <- file.path(dir_clean, "danio_gbif_clean.csv")
+gbif_summary_file <- file.path(dir_clean, "danio_gbif_summary.csv")
+
+readr::write_csv(gbif_clean,   gbif_clean_file)
+readr::write_csv(gbif_summary, gbif_summary_file)
+
+#### 7. VISUALIZATIONS (GEOPHYLOGENY, MAPS, SAMPLING) ----
+
+### 7A. Make GBIF names line up with tree tip labels ----
+# Problem we saw:
+#   - Tree tips look like: "D. aesculapii", "Microrasbora erythromicron"
+#   - GBIF species_name look like: "Danio aesculapii Kullander & Fang, 2009"
+#   - So our earlier tip_label did NOT match tree_tips and everything was filtered out.
+#
+# Here I:
+#   1. Strip author + year off the GBIF names (keep only genus + species)
+#   2. Abbreviate "Danio <species>" -> "D. <species>" (to match the phylogeny)
+#   3. Keep Microrasbora as full genus (matches tree labels)
+#   4. Handle the Brachydanio synonym manually.
+#   5. Drop BOLD: pseudo-taxa.
+
+gbif_named <- gbif_clean %>%
+  # remove weird BOLD “species” rows
+  dplyr::filter(!stringr::str_starts(species_name, "BOLD:")) %>%
+  # pull out just genus + species (first two words)
+  dplyr::mutate(
+    genus   = stringr::word(species_name, 1),
+    sp      = stringr::word(species_name, 2),
+    short_name = paste(genus, sp)
+  ) %>%
+  # create a tip_label that is formatted like the tree labels
+  dplyr::mutate(
+    tip_label = dplyr::case_when(
+      genus == "Danio"        ~ paste("D.", sp),
+      genus == "Microrasbora" ~ paste(genus, sp),
+      genus == "Brachydanio"  ~ "D. albolineatus",  # known synonym
+      TRUE                    ~ short_name          # fallback
+    )
+  )
+
+# Tip labels from the phylogeny
+tree_tips <- tree_plot$tip.label
+
+# Quick sanity check: which tip labels are shared?
+intersect(tree_tips, unique(gbif_named$tip_label))
+
+# Keep only GBIF records for species that actually appear in the tree
+gbif_phylo <- gbif_named %>%
+  dplyr::filter(tip_label %in% tree_tips)
+
+# Sanity: how many records per tip?
+gbif_phylo %>%
+  dplyr::count(tip_label, name = "n_records") %>%
+  dplyr::arrange(dplyr::desc(n_records))
+# One mean coordinate per species (for labelled centroids)
+gbif_centroids <- gbif_phylo %>%
+  dplyr::group_by(tip_label) %>%
+  dplyr::summarise(
+    lon = mean(lon, na.rm = TRUE),
+    lat = mean(lat, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+### 7B. Base map for South / Southeast Asia ----
+# I draw a simple world map and crop it to the region where Danio occurs.
+
+world_df <- map_data("world")
+
+asia_bb <- world_df %>%
+  dplyr::filter(long > 60, long < 130,
+                lat  > -10, lat < 40)
+
+
+### 7C. Occurrence map for Danio species used in the phylogeny ----
+# Each point = a cleaned GBIF record, coloured by species (tree tip label).
+# NOTE: use lon/lat columns here (decimalLongitude/Latitude no longer exist).
+
+p_map <- ggplot() +
+  geom_polygon(
+    data = asia_bb,
+    aes(x = long, y = lat, group = group),
+    fill   = "grey96",
+    colour = "grey80",
+    linewidth = 0.2
+  ) +
+  geom_point(
+    data = gbif_phylo,
+    aes(x = lon, y = lat),
+    colour = "grey75",
+    alpha  = 0.4,
+    size   = 1
+  ) +
+  geom_point(
+    data = gbif_centroids,
+    aes(x = lon, y = lat, colour = tip_label),
+    size  = 3,
+    alpha = 0.9
+  ) +
+  coord_quickmap(xlim = c(70, 125),
+                 ylim = c(-5, 35)) +
+  scale_colour_viridis_d(
+    option = "D",
+    name   = "Species"
+  ) +
+  guides(
+    colour = guide_legend(
+      ncol = 2,
+      override.aes = list(size = 4, alpha = 1)
+    )
+  ) +
+  labs(
+    title = "GBIF occurrences for Danio species used in the COI phylogeny",
+    x     = "Longitude",
+    y     = "Latitude"
+  ) +
+  theme_bw() +
+  theme(
+    plot.title        = element_text(face = "bold", hjust = 0),
+    legend.position   = "right",
+    legend.title      = element_text(face = "bold"),
+    legend.key.height = unit(0.45, "lines")
+  )
+
+### 7D. Geophylogeny: tree + map in one figure ----
+# I put the Grafen-scaled COI tree on top and the occurrence map below.
+# This keeps both readable and still shows “phylogeny + geography”.
+
+p_tree_clean <- p_tree +
+  labs(title = "COI phylogeny for Danio (Grafen-scaled)") +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0)
+  )
+
+fig_geophylo <- p_tree_clean / p_map +
+  plot_layout(heights = c(1, 1.2))
+
+
+### 7E. Sampling intensity barplot ----
+# Now I summarise how many cleaned GBIF records each phylogeny species has.
+# I summarise directly from gbif_phylo so that:
+#   - names already match the tree
+#   - we use the correct count column name.
+
+gbif_summary_phylo <- gbif_phylo %>%
+  dplyr::count(tip_label, name = "n_records_clean") %>%
+  dplyr::arrange(dplyr::desc(n_records_clean))
+
+fig_sampling <- gbif_summary_phylo %>%
+  mutate(tip_label = forcats::fct_reorder(tip_label, n_records_clean)) %>%
+  ggplot(aes(x = n_records_clean, y = tip_label)) +
+  geom_col(width = 0.6, fill = "grey30") +
+  labs(
+    title = "Sampling intensity for Danio species in COI phylogeny",
+    x     = "Number of cleaned GBIF records",
+    y     = NULL
+  ) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0)
+  )
+
+p_tree_clean <- p_tree +
+  labs(title = "COI phylogeny for Danio (Grafen-scaled)") +
+  theme(plot.title = element_text(face = "bold", hjust = 0))
+
+fig_geophylo <- p_tree_clean / p_map + plot_layout(heights = c(1, 1.2))
+
+fig_geophylo
+fig_sampling
