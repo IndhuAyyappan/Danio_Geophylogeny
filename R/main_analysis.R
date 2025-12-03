@@ -20,6 +20,7 @@
 #BiocManager::install("ggtree")
 #install.packages(c("maps", "patchwork"))
 # install.packages("geosphere")
+#install.packages("paletteer")
 library(tidyverse)
 library(ape)
 library(phangorn)
@@ -34,6 +35,7 @@ library(patchwork)
 library(viridis)
 library(dplyr)
 library(geosphere)
+
 
 # Folder paths (relative)
 dir_raw   <- "data_raw"
@@ -147,7 +149,6 @@ short_labels <- ifelse(is.na(short_labels), names(alignment), short_labels)
 
 #Replace full genus names ("Danio species") with abbreviated labels ("D. species") for cleaner plotting
 short_labels <- sub("^Danio ", "D. ", short_labels)
-
 names(alignment) <- short_labels
 
 #### 4C. CONVERT ALIGNMENT TO phyDat (phangorn) ----
@@ -195,16 +196,21 @@ add.scale.bar()
 #### 5G. PUBLICATION-STYLE TREE WITH GGTREE ----
 
 #Now I use ggtree so that the labels are aligned and the x-axis is scaled in substitutions per site. The xlim() gives extra room for the dotted label guides.
-p_tree <- ggtree(tree_plot) +
+p_tree_standalone <- ggtree(tree_plot) +
   geom_tiplab(
-    size  = 2.4,
+    size  = 2.8,
     hjust = 0
   ) +
-  xlim(0, max_d * 1.35) +   # a bit of extra room for labels
-  theme_tree2() +
-  xlab("Relative divergence (scaled branch lengths)")
+  xlim(0, max_d * 1.30) +     # room for labels
+  theme_tree() +            
+  labs(
+    title = "COI phylogeny for Danio "
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0),
+  )
 
-p_tree
+p_tree_standalone
 #### 6. GBIF OCCURRENCE DATA ----
 
 # In this section I pull occurrence records from GBIF for the same Danio
@@ -306,54 +312,66 @@ readr::write_csv(gbif_summary, gbif_summary_file)
 #### 7. VISUALIZATIONS (GEOPHYLOGENY, MAPS, SAMPLING) ----
 
 ### 7A. Make GBIF names line up with tree tip labels ----
-# Problem we saw:
-#   - Tree tips look like: "D. aesculapii", "Microrasbora erythromicron"
-#   - GBIF species_name look like: "Danio aesculapii Kullander & Fang, 2009"
-#   - So our earlier tip_label did NOT match tree_tips and everything was filtered out.
-#
-# Here I:
-#   1. Strip author + year off the GBIF names (keep only genus + species)
-#   2. Abbreviate "Danio <species>" -> "D. <species>" (to match the phylogeny)
-#   3. Keep Microrasbora as full genus (matches tree labels)
-#   4. Handle the Brachydanio synonym manually.
-#   5. Drop BOLD: pseudo-taxa.
 
 gbif_named <- gbif_clean %>%
-  # remove weird BOLD “species” rows
+  # remove BOLD “species” rows
   dplyr::filter(!stringr::str_starts(species_name, "BOLD:")) %>%
   # pull out just genus + species (first two words)
   dplyr::mutate(
-    genus   = stringr::word(species_name, 1),
-    sp      = stringr::word(species_name, 2),
+    genus      = stringr::word(species_name, 1),
+    sp         = stringr::word(species_name, 2),
     short_name = paste(genus, sp)
   ) %>%
   # create a tip_label that is formatted like the tree labels
   dplyr::mutate(
     tip_label = dplyr::case_when(
-      genus == "Danio"        ~ paste("D.", sp),
-      genus == "Microrasbora" ~ paste(genus, sp),
-      genus == "Brachydanio"  ~ "D. albolineatus",  # known synonym
-      TRUE                    ~ short_name          # fallback
+      # special case: Danio erythromicron actually belongs in Microrasbora
+      genus == "Danio"       & sp == "erythromicron" ~ "Microrasbora erythromicron",
+      genus == "Danio"                               ~ paste("D.", sp),
+      genus == "Microrasbora"                        ~ paste(genus, sp),
+      genus == "Brachydanio"                         ~ "D. albolineatus",
+      TRUE                                           ~ short_name
     )
   )
 
-# Tip labels from the phylogeny
+# Tip labels from the phylogeny (in tree order)
 tree_tips <- tree_plot$tip.label
 
-# Quick sanity check: which tip labels are shared?
-intersect(tree_tips, unique(gbif_named$tip_label))
-
 # Keep only GBIF records for species that actually appear in the tree
+# and lock the factor levels to the tree tip order
 gbif_phylo <- gbif_named %>%
-  dplyr::filter(tip_label %in% tree_tips)
+  dplyr::filter(tip_label %in% tree_tips) %>%
+  dplyr::mutate(
+    tip_label = factor(tip_label, levels = tree_tips)
+  )
 
-# Sanity: how many records per tip?
-gbif_phylo %>%
-  dplyr::count(tip_label, name = "n_records") %>%
-  dplyr::arrange(dplyr::desc(n_records))
+## Create clade assignments (broad COI clades from the tree)
+clade_df <- tibble(
+  tip_label = tree_tips
+) %>%
+  dplyr::mutate(
+    clade = dplyr::case_when(
+      tip_label %in% c("D. roseus", "D. albolineatus", "D. tweediei") ~ "Roseus clade",
+      tip_label %in% c("D. kerri", "D. sp.", "D. kyathit", "D. aff.",
+                       "D. aesculapii", "D. tinwini", "D. nigrofasciatus") ~ "Kerri–kyathit clade",
+      tip_label %in% c("D. catenatus", "D. annulosus", "D. sysphigmatus",
+                       "D. dangila", "D. meghalayensis", "D. assamila",
+                       "D. rerio", "D. cf.") ~ "Annulatus clade",
+      tip_label %in% c("D. choprae", "D. choprai", "D. feegrarei",
+                       "D. htammanthin us", "D. flagrans") ~ "Choprae clade",
+      tip_label %in% c("D. margaritatus", "D. erythromicron") ~ "Margaritatus clade",
+      tip_label == "Microrasbora erythromicron" ~ "Outgroup",
+      TRUE ~ "Other"
+    )
+  )
+
+## Join clade labels to GBIF data
+gbif_phylo <- gbif_phylo %>%
+  dplyr::left_join(clade_df, by = "tip_label")
+
 # One mean coordinate per species (for labelled centroids)
 gbif_centroids <- gbif_phylo %>%
-  dplyr::group_by(tip_label) %>%
+  dplyr::group_by(tip_label, clade) %>%
   dplyr::summarise(
     lon = mean(lon, na.rm = TRUE),
     lat = mean(lat, na.rm = TRUE),
@@ -361,7 +379,6 @@ gbif_centroids <- gbif_phylo %>%
   )
 
 ### 7B. Base map for South / Southeast Asia ----
-# I draw a simple world map and crop it to the region where Danio occurs.
 
 world_df <- map_data("world")
 
@@ -369,10 +386,7 @@ asia_bb <- world_df %>%
   dplyr::filter(long > 60, long < 130,
                 lat  > -10, lat < 40)
 
-
 ### 7C. Occurrence map for Danio species used in the phylogeny ----
-# Each point = a cleaned GBIF record, coloured by species (tree tip label).
-# NOTE: use lon/lat columns here (decimalLongitude/Latitude no longer exist).
 
 p_map <- ggplot() +
   geom_polygon(
@@ -382,31 +396,37 @@ p_map <- ggplot() +
     colour = "grey80",
     linewidth = 0.2
   ) +
+  # all cleaned GBIF points (faint background in grey)
   geom_point(
     data = gbif_phylo,
     aes(x = lon, y = lat),
-    colour = "grey75",
-    alpha  = 0.4,
-    size   = 1
+    colour = "grey20",
+    alpha  = 0.25,
+    size   = 0.5
   ) +
+  # species centroids (coloured by COI clade)
   geom_point(
-    data = gbif_centroids,
-    aes(x = lon, y = lat, colour = tip_label),
-    size  = 3,
-    alpha = 0.9
+    data   = gbif_centroids %>% left_join(clade_df),
+    aes(x = lon, y = lat, fill = clade),
+    shape  = 21,        # filled circle with border
+    colour = "black",   # outline
+    size   = 3,
+    alpha  = 0.6
+  ) +
+  scale_fill_manual(
+    name   = "Major Danio clades",
+    values = c(
+      "Annulatus clade"      = "#1b9e77",
+      "Choprae clade"        = "#7570b3",
+      "Kerri–kyathit clade"  = "#d95f02",
+      "Margaritatus clade"   = "#e7298a",
+      "Roseus clade"         = "#1f78b4",
+      "Outgroup"             = "#000000",
+      "Other"                = "#666666"
+    )
   ) +
   coord_quickmap(xlim = c(70, 125),
                  ylim = c(-5, 35)) +
-  scale_colour_viridis_d(
-    option = "D",
-    name   = "Species"
-  ) +
-  guides(
-    colour = guide_legend(
-      ncol = 2,
-      override.aes = list(size = 4, alpha = 1)
-    )
-  ) +
   labs(
     title = "GBIF occurrences for Danio species used in the COI phylogeny",
     x     = "Longitude",
@@ -421,11 +441,17 @@ p_map <- ggplot() +
   )
 
 ### 7D. Geophylogeny: tree + map in one figure ----
-# I put the Grafen-scaled COI tree on top and the occurrence map below.
-# This keeps both readable and still shows “phylogeny + geography”.
 
-p_tree_clean <- p_tree +
-  labs(title = "COI phylogeny for Danio (Grafen-scaled)") +
+p_tree_clean <- ggtree(tree_plot) +
+  geom_tiplab(
+    size  = 2.4,
+    hjust = 0
+  ) +
+  xlim(0, max_d * 2.2) +   # extra room for labels
+  labs(
+    title = "COI phylogeny for Danio"
+  ) +
+  theme_tree() +           # removes x-axis line and ticks
   theme(
     plot.title = element_text(face = "bold", hjust = 0)
   )
@@ -433,21 +459,18 @@ p_tree_clean <- p_tree +
 fig_geophylo <- p_tree_clean / p_map +
   plot_layout(heights = c(1, 1.2))
 
-
 ### 7E. Sampling intensity barplot ----
-# Now I summarise how many cleaned GBIF records each phylogeny species has.
-# I summarise directly from gbif_phylo so that:
-#   - names already match the tree
-#   - we use the correct count column name.
 
 gbif_summary_phylo <- gbif_phylo %>%
   dplyr::count(tip_label, name = "n_records_clean") %>%
   dplyr::arrange(dplyr::desc(n_records_clean))
 
 fig_sampling <- gbif_summary_phylo %>%
-  mutate(tip_label = forcats::fct_reorder(tip_label, n_records_clean)) %>%
+  dplyr::mutate(
+    tip_label = forcats::fct_reorder(tip_label, n_records_clean)
+  ) %>%
   ggplot(aes(x = n_records_clean, y = tip_label)) +
-  geom_col(width = 0.6, fill = "grey30") +
+  geom_col(width = 0.6, fill = "#1f78b4") +
   labs(
     title = "Sampling intensity for Danio species in COI phylogeny",
     x     = "Number of cleaned GBIF records",
@@ -458,11 +481,139 @@ fig_sampling <- gbif_summary_phylo %>%
     plot.title = element_text(face = "bold", hjust = 0)
   )
 
-p_tree_clean <- p_tree +
-  labs(title = "COI phylogeny for Danio (Grafen-scaled)") +
-  theme(plot.title = element_text(face = "bold", hjust = 0))
-
-fig_geophylo <- p_tree_clean / p_map + plot_layout(heights = c(1, 1.2))
-
 fig_geophylo
 fig_sampling
+### 8. Sister-species geographic separation ----
+## 8A. Use existing tree for sister-pair search ----
+tree <- tree_plot
+
+# Helper: extract sister pairs (both children are tips)
+get_sister_pairs <- function(tree) {
+  pairs <- list()
+  count <- 1
+  
+  for (node in (Ntip(tree) + 1):(tree$Nnode + Ntip(tree))) {
+    children <- tree$edge[tree$edge[, 1] == node, 2]
+    if (all(children <= Ntip(tree))) {
+      pairs[[count]] <- tree$tip.label[children]
+      count <- count + 1
+    }
+  }
+  pairs
+}
+
+sister_pairs <- get_sister_pairs(tree)
+sister_pairs  
+
+## 8B. Centroids for each species used in the phylogeny ----
+centroids <- gbif_phylo %>%
+  dplyr::group_by(tip_label) %>%
+  dplyr::summarise(
+    lon = mean(lon, na.rm = TRUE),
+    lat = mean(lat, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  as.data.frame()
+
+rownames(centroids) <- centroids$tip_label
+
+## 8C. Keep only sister pairs where BOTH species have centroids ----
+usable_sisters <- purrr::keep(
+  sister_pairs,
+  ~ all(.x %in% rownames(centroids))
+)
+
+usable_sisters
+
+## 8D. Geographic distance (km) between sister centroids ----
+sister_geo_dist <- purrr::map_dfr(
+  seq_along(usable_sisters),
+  function(i) {
+    sp <- usable_sisters[[i]]
+    sp1 <- sp[1]
+    sp2 <- sp[2]
+    
+    d_km <- geosphere::distHaversine(
+      centroids[sp1, c("lon", "lat")],
+      centroids[sp2, c("lon", "lat")]
+    ) / 1000  # metres → km
+    
+    data.frame(
+      pair_id = paste0("Pair ", i, ": ", sp1, " – ", sp2),
+      sp1     = sp1,
+      sp2     = sp2,
+      dist_km = d_km,
+      stringsAsFactors = FALSE
+    )
+  }
+)
+
+sister_geo_dist <- sister_geo_dist %>%
+  mutate(
+    pair_label = paste0(
+      "Pair ", row_number(), ": ",
+      sp1, " – ", sp2,
+      " (", round(dist_km), " km)"
+    )
+  )
+sister_geo_dist
+## 8E. Build line segments between sister centroids ----
+sister_lines <- purrr::map_dfr(
+  seq_along(usable_sisters),
+  function(i) {
+    sp <- usable_sisters[[i]]
+    
+    this_label <- sister_geo_dist$pair_label[i]
+    
+    data.frame(
+      pair_label = this_label,
+      sp1        = sp[1],
+      sp2        = sp[2],
+      lon1       = centroids[sp[1], "lon"],
+      lat1       = centroids[sp[1], "lat"],
+      lon2       = centroids[sp[2], "lon"],
+      lat2       = centroids[sp[2], "lat"],
+      stringsAsFactors = FALSE
+    )
+  }
+)
+sister_lines
+
+## 8F. Map: sister-pair connections on top of all Danio points ----
+fig_sister_map <- ggplot() +
+  geom_polygon(data = asia_bb,
+               aes(x = long, y = lat, group = group),
+               fill   = "grey95",
+               colour = "grey80",
+               linewidth = 0.2) +
+  geom_point(data = gbif_phylo,
+             aes(x = lon, y = lat),
+             colour = "grey80",
+             alpha  = 0.4,
+             size   = 0.7) +
+  geom_segment(data = sister_lines,
+               aes(x = lon1, y = lat1,
+                   xend = lon2, yend = lat2,
+                   colour = pair_label),
+               linewidth = 1.1) +
+  geom_point(data = sister_lines,
+             aes(x = lon1, y = lat1, colour = pair_label),
+             size = 2.3) +
+  geom_point(data = sister_lines,
+             aes(x = lon2, y = lat2, colour = pair_label),
+             size = 2.3) +
+  coord_quickmap(xlim = c(70, 125),
+                 ylim = c(-5, 35)) +
+  scale_colour_brewer(palette = "Dark2", name = "Sister pairs") +
+  labs(
+    title = "Geographic separation between sister Danio species",
+    x     = "Longitude",
+    y     = "Latitude"
+  ) +
+  theme_bw() +
+  theme(
+    plot.title      = element_text(face = "bold", hjust = 0),
+    legend.position = "right"
+  )
+
+fig_sister_map
