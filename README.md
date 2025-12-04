@@ -6,7 +6,7 @@
 
 **Theme:** Geography & Evolutionary Diversification
 
-## \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+## 
 **Overview**
 
 This project investigates whether closely related *Danio* species occupy similar or different geographic regions.
@@ -27,7 +27,8 @@ We integrate:
 
 -   Species richness heatmapping
 
-## \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_**1. COI Phylogeny**
+## 
+**1. COI Phylogeny**
 
 -   One representative COI sequence per species was cleaned, aligned (**DECIPHER**), and used to compute JC69 distances.
 
@@ -37,7 +38,7 @@ We integrate:
 
     The phylogeny resolves **six major Danio clades**, consistent with published studies.
 
-## \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+## 
 **2. Geophylogeny : Mapping Clades to GBIF Occurrences**
 
 GBIF occurrences were matched to phylogeny tips and plotted on an Asia map using clade-specific colours.
@@ -49,7 +50,7 @@ GBIF occurrences were matched to phylogeny tips and plotted on an Asia map using
 Species within the same clade **cluster geographically**, especially in the **Indo-Burman region** (NE India, Bangladesh, Myanmar).
 
 ## 
-\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_**3. Sampling Intensity Check**
+**3. Sampling Intensity Check**
 
 To assess bias, raw GBIF points were visualized.
 
@@ -59,7 +60,8 @@ Sampling effort is highest in NE India, Bangladesh, Myanmar, and Thailand.
 
 Southern regions (Malaysia/Indonesia) are under-sampled.
 
-## \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_**4. Sister-Species Spatial Comparison**
+## 
+**4. Sister-Species Spatial Comparison**
 
 Sister pairs extracted from the phylogeny were mapped separately.
 
@@ -67,14 +69,15 @@ Sister pairs extracted from the phylogeny were mapped separately.
 
 Some pairs show **sympatry**, while others are strongly **allopatric**, indicating mixed diversification modes.
 
-## \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_**5. Species Richness Heatmap (1° × 1° Grid)**
+## 
+**5. Species Richness Heatmap (1° × 1° Grid)**
 
 GBIF occurrences were aggregated into spatial bins and visualized using a magma colour scale.
 
 **Main takeaway:**
 
 A strong **richness hotspot** occurs in the Indo-Burman region (up to 5 species per cell), declining eastward and southward.
-\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+
 
 ## **Conclusion**
 
