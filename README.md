@@ -1,158 +1,131 @@
-**Assignment 4 – Geography & Evolutionary Diversification in Danio**
+# Assignment 4 – Geography & Evolutionary Diversification in *Danio*
 
-BINF\*6210 – Software Tools (Theme 3) Student: Indhu Ayyappan
+\*\*BINF\*6210 – Software Tools (Theme 3)**\
+**Student: Indhu Ayyappan\*\*
 
-⸻
+------------------------------------------------------------------------
 
-**Purpose of the project**
+## Purpose of the Project
 
-The goal of this assignment was to evaluate whether closely related Danio species occupy similar or different geographic regions, using a combined phylogenetic and spatial approach: • COI sequences from NCBI → phylogeny • Occurrence records from GBIF → geographic ranges • Integrated analyses → geophylogeny, sampling intensity, sister-species comparison, richness map
+The goal of this assignment was to evaluate whether closely related *Danio* species occupy similar or different geographic regions, using a combined phylogenetic and spatial workflow:
 
-⸻
+-   COI sequences from NCBI → phylogeny\
+-   Occurrence records from GBIF → geographic ranges\
+-   Integrated analyses → geophylogeny, sampling intensity, sister-species comparison, richness map
 
-1.  **COI Phylogeny of Danio**
+------------------------------------------------------------------------
 
-The COI tree recovers multiple well defined Danio clades that match previously published relationships.
+## 1. COI Phylogeny of *Danio*
 
-Methods:
+The COI tree recovers multiple well defined *Danio* clades that match previously published relationships.
 
-• Downloaded all Danio COI sequences from NCBI
+### **Methods**
 
-• Cleaned & filtered by length (500–800 bp)
+-   Downloaded all *Danio* COI sequences from NCBI\
+-   Cleaned & filtered by length (500–800 bp)\
+-   Kept longest sequence per species\
+-   Aligned using DECIPHER\
+-   Built NJ tree (JC69) and rooted with *Microrasbora*\
+-   Ladderized and Grafen-transformed for visualization\
+-   Visualized with **ggtree**
 
-• Kept longest sequence per species
+![Figure 1: COI Phylogeny](figs/Fig_1.png)
 
-• Aligned using DECIPHER
+**Interpretation:**\
+Six recognizable clades appear, and the rooting confirms a clear split between the *Microrasbora* outgroup and the core *Danio* radiation.
 
-• Built NJ tree (JC69) + rooted with Microrasbora
+------------------------------------------------------------------------
 
-• Ladderized and Grafen-transformed for visualization
-
-• Visualized with ggtree
-
-![](images/clipboard-3830492372.png)
-
-Figure 1: COI phylogeny
-
-Interpretation: Six recognizable clades appear, and the rooting confirms a clear split between the Microrasbora outgroup and the core Danio radiation.
-
-⸻
-
-2.  **Geophylogeny: Linking the Tree to Geography**
+## 2. Geophylogeny: Linking the Tree to Geography
 
 Species belonging to the same phylogenetic clade tend to cluster in the same geographic region.
 
-Methods:
+### **Methods**
 
-• Downloaded 500 GBIF occurrence records per species
+-   Downloaded up to 500 GBIF records per species\
+-   Cleaned for coordinate issues, uncertainties, invalid points\
+-   Matched species names to tree tip labels\
+-   Computed species centroids\
+-   Mapped centroids colored by COI clade
 
-• Cleaned for coordinate issues, uncertainties, invalid points
+![Figure 2: Geophylogeny(tree + map)](figs/Fig_2.png)
 
-• Matched species names to tree tip labels
+**Interpretation:**\
+The Indo-Burman region (NE India, Bangladesh, Myanmar) forms the core geographic area for most clades, strongly mirroring phylogenetic structure.
 
-• Computed species centroids • Mapped centroids colored by COI clade
+------------------------------------------------------------------------
 
-![](images/clipboard-3676286443.png)Figure 2: Geophylogeny (tree + map)
-
-Interpretation: The Indo-Burman region (NE India, Bangladesh, Myanmar) forms the core geographic area for most clades, strongly mirroring phylogenetic structure.
-
-⸻
-
-3.  **Sampling Intensity Check**
+## 3. Sampling Intensity Across Species
 
 Sampling bias exists and must be considered when interpreting geographic patterns.
 
-Methods:
+### **Methods**
 
-• Counted cleaned GBIF records per species
+-   Counted cleaned GBIF records per species\
+-   Ranked species by sampling depth
 
-• Ranked species by sampling depth
+![Figure 3: Sampling Intensity Barplot](figs/Fig_3.png)
 
-![](figs/Fig_3.png)
+**Interpretation:**\
+Sampling is highest in NE India, Bangladesh, Myanmar, and Thailand.\
+Lower sampling in southern regions (Malaysia, Indonesia) may partially explain weaker richness signals there.
 
-Figure 3: Sampling Intensity Barplot
+------------------------------------------------------------------------
 
-Interpretation:
+## 4. Sister Species Geographic Separation
 
-Sampling is highest in NE India, Bangladesh, Myanmar and Thailand. Lower sampling in southern regions (Malaysia, Indonesia) may partially explain weaker richness signals there.
+Sister pairs were identified directly from the COI phylogeny, and the geographic distance between their range centroids was calculated.
 
-⸻
+### **Methods**
 
-4.  **Sister Species Geographic Separation**
+-   Extracted sister pairs from the NJ tree\
+-   Computed geographic centroid for each species\
+-   Calculated Haversine distance (km)\
+-   Drew line segments linking sister species ranges
 
-Identified sister pairs directly from the COI phylogeny and calculated the geographic distance between their GBIF derived range centroids.
+![Figure 4: Sister Species Range Connections](figs/Fig_4.png)
 
-Methods:
+**Interpretation:**\
+Distances between sister species range from **\~490 km to \~823 km**, indicating:
 
-• Extracted sister pairs directly from the NJ tree
+-   Some pairs occupy adjacent or nearby regions → **local diversification**\
+-   Others are widely separated → **historical dispersal or range shifts**
 
-• Computed geographic centroid for each species
+Together, this supports **both sympatric and allopatric divergence** within *Danio*.
 
-• Calculated haversine distance (km)
+------------------------------------------------------------------------
 
-• Drew line segments linking sister ranges
+## 5. Species Richness Heatmap
 
-![](figs/Fig_4.png)
+A clear *Danio* biodiversity hotspot exists in the Indo-Burman region.
 
-Figure 4: Sister species range connections
+### **Methods**
 
-Results:
+-   Created a 1° × 1° richness grid\
+-   Counted distinct species per cell\
+-   Visualized with a **magma** heatmap
 
--   Pair 1 (D. choprae – D. choprai, \~680 km):
+![Figure 5: Species Richness Heatmap](figs/Fig_5.png)
 
-    Not overlapping; moderately separated. Suggests range expansion or historical dispersal.
+**Interpretation:**\
+Richness peaks (up to 5 species per cell) occur in the eastern India–Bangladesh–Myanmar region.\
+Moving east into Thailand or south toward Malaysia, richness sharply drops to 1–2 species per cell.\
+This pattern mirrors the Indo-Burman hotspot seen in the phylogeny and occurrence map.
 
--   Pair 2 (D. annulosus – D. catenatus, \~490 km):
+------------------------------------------------------------------------
 
-    Also clearly separated. Indicates allopatric divergence rather than local differentiation.
-
--   Pair 3 (D. albolineatus – D. roseus, \~823 km):
-
-    Large geographic gap. Represents strong allopatry.
-
-    Interpretation:
-
-    All three sister pairs are geographically distinct, separated by hundreds of kilometres, suggesting primarily allopatric divergence in Danio.
-
-    There is *no* strong evidence for sympatric sister species in this dataset.
-
-    This fits well with the broader Indo-Burman hotspot pattern, where closely related species originate in the same general region but now occupy different subregions.
-
-⸻
-
-5.  **Species Richness Heatmap**
-
-A clear Danio biodiversity hotspot exists in the Indo-Burman region.
-
-Methods:
-
-• Created 1°×1° richness grid
-
-• Counted distinct species in each cell
-
-• Visualized with a magma heatmap on an Asia base map
-
-![](figs/Fig_5.png)
-
-Figure 5: Species richness heatmap
-
-Interpretation:
-
-Danio species richness is strongly concentrated in the eastern India – Bangladesh – Myanmar region, where some grid cells contain up to 5 species. Moving east into Thailand or south toward Malaysia, richness drops quickly to 1–2 species per cell. This pattern mirrors the Indo-Burman biodiversity hotspot seen in the phylogeny and occurrence map.
-
-⸻
-
-6.  **Overall Biological Conclusion**
+## 6. Overall Biological Conclusion
 
 Across all analyses:
 
-• Most Danio clades originate in the Indo-Burman biodiversity hotspot
+-   Most *Danio* clades originate in the Indo-Burman biodiversity hotspot\
+-   Geographic clustering aligns strongly with phylogenetic structure\
+-   Sister species show a mix of **adjacent ranges and wider separations**\
+-   Sampling patterns explain some absences but **do not change the core biogeographic signal**
 
-• Geographic clustering aligns strongly with phylogenetic structure
+### **Overall Conclusion**
 
-• Sister species show consistent allopatry, with no truly overlapping pairs.
+Closely related *Danio* species tend to originate in the same broad region (Indo-Burma) but today occupy adjacent rather than overlapping ranges.\
+This supports a history of **local diversification followed by range separation**, rather than widespread dispersal or strictly sympatric divergence.
 
-• Sampling patterns explain some absences but not the core biogeographic signal
-
-**Final conclusion:**
-Closely related Danio species tend to originate in the same broad region (Indo-Burma) but today occupy adjacent rather than overlapping ranges.This supports a history of local diversification followed by range separation, rather than widespread dispersal or sympatric divergence.
+------------------------------------------------------------------------
