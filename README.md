@@ -1,47 +1,89 @@
-Assignment 4 – Geography & Evolutionary Diversification in Danio
+# **Assignment 4 – Geography & Evolutionary Diversification in Danio**
 
-Student: Indhu Ayyappan Course: BINF\*6210 – Software Tools Project Theme: Theme 3 – Geography & Evolutionary Diversification
+**Course:** BINF\*6210 – Software Tools
 
-Objective: Investigate whether closely related species within the genus Danio occupy the same geographic regions or different regions, using COI sequences (NCBI) and species occurrences (GBIF).
+**Student:** Indhu Ayyappan
 
-⸻
+**Theme:** Geography & Evolutionary Diversification
 
-Current Status
+## \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+**Overview**
 
-Completed so far • Project structure initialized\
-• COI sequence dataset downloaded from NCBI (rentrez)\
-• QC performed (sequence lengths, species parsing, duplicates removed)\
-• One representative sequence per species retained\
-• Multiple sequence alignment completed using DECIPHER\
-• Distance matrix calculated using JC69 substitution model\
-• Neighbour–Joining tree constructed\
-• Tree successfully rooted using Microrasbora erythromicron as outgroup\
-• Tree ladderized and Grafen-scaled for clearer visualization\
-• Final publication-ready phylogeny generated using ggtree\
-• GBIF occurrence data downloaded and cleaned (coordinate QC, species name filtering, deduplication)\
-• GBIF species names reconciled to phylogeny tip labels using a custom mapping (Danio → D. abbreviations, Microrasbora handled separately)\
-• Clades assigned from the COI phylogeny (Annulatus, Kerri–kyathit, Choprae, Margaritatus, Roseus, Outgroup, Other)\
-• Species-centroid coordinates calculated for map visualization\
-• Asia basemap generated using map_data()\
-• Final geophylogeny figure produced (COI phylogeny + geographic occurrences)\
-• Final sampling-intensity barplot produced (clean GBIF counts per phylogeny species)
+This project investigates whether closely related *Danio* species occupy similar or different geographic regions.
 
-⸻
+We integrate:
 
-Visualizations Produced
+-   COI sequence data from NCBI
 
-1.  COI Phylogeny for Danio • Neighbour–Joining tree • Rooted using Microrasbora erythromicron • Ladderized and Grafen-scaled • Clean tip labels • High-resolution layout using ggtree
+-   GBIF species occurrence records
 
-2.  Geographic Occurrence Map • Cleaned GBIF points shown in faint grey (background sampling density) • One centroid point per species (coloured by major clade) • Custom, colour-blind-safe clade palette • Legend ordered + formatted cleanly • High-resolution basemap (South + Southeast Asia)
+-   Phylogenetic reconstruction
 
-3.  Geophylogeny (Tree + Map) • Combined using patchwork • Phylogeny on top, map below • Consistent styling and font size • Publication-quality layout
+-   Geophylogeny mapping
 
-4.  Sampling Intensity Barplot • Cleaned GBIF records per phylogeny species • Species ordered by count • Useful for comparing data availability and spatial sampling bias
+-   Sampling bias assessment
 
-⸻
+-   Sister-species geographic comparison
 
-Next Steps 1. Examine spatial patterns for evidence of: • sympatry (co-occurring closely related species) • allopatry (geographic separation along phylogeny) 2. Quantify phylogenetic vs. geographic distances (e.g., Mantel test)\
-3. Interpret biogeographical patterns at the clade level\
-4. Write final report section discussing diversification and spatial structuring
+-   Species richness heatmapping
 
-⸻
+## \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_**1. COI Phylogeny**
+
+-   One representative COI sequence per species was cleaned, aligned (**DECIPHER**), and used to compute JC69 distances.
+
+-   A neighbor-joining tree was constructed and rooted using *Microrasbora erythromicron*.
+
+    **Key result:**
+
+    The phylogeny resolves **six major Danio clades**, consistent with published studies.
+
+## \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+**2. Geophylogeny : Mapping Clades to GBIF Occurrences**
+
+GBIF occurrences were matched to phylogeny tips and plotted on an Asia map using clade-specific colours.
+
+![](images/clipboard-2079047066.png)
+
+**Key insight:**
+
+Species within the same clade **cluster geographically**, especially in the **Indo-Burman region** (NE India, Bangladesh, Myanmar).
+
+## 
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_**3. Sampling Intensity Check**
+
+To assess bias, raw GBIF points were visualized.
+
+**Observation:**
+
+Sampling effort is highest in NE India, Bangladesh, Myanmar, and Thailand.
+
+Southern regions (Malaysia/Indonesia) are under-sampled.
+
+## \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_**4. Sister-Species Spatial Comparison**
+
+Sister pairs extracted from the phylogeny were mapped separately.
+
+**Biological pattern:**
+
+Some pairs show **sympatry**, while others are strongly **allopatric**, indicating mixed diversification modes.
+
+## \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_**5. Species Richness Heatmap (1° × 1° Grid)**
+
+GBIF occurrences were aggregated into spatial bins and visualized using a magma colour scale.
+
+**Main takeaway:**
+
+A strong **richness hotspot** occurs in the Indo-Burman region (up to 5 species per cell), declining eastward and southward.
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+
+## **Conclusion**
+
+Across phylogeny, mapped occurrences, sister-pair patterns, and richness measures:
+
+-   *Danio* species show **spatial clustering by clade**,
+
+-   Several clades are centered in the **Indo-Burman biodiversity hotspot**,
+
+-   Geographic patterns support a scenario of **local diversification from a shared ancestral region**.
+
+    Overall, evolutionary relatedness and geography are strongly linked in *Danio*.
