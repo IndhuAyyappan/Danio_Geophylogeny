@@ -1,7 +1,7 @@
 # Assignment 4 – Geography & Evolutionary Diversification in *Danio*
 
-\*\*BINF\*6210 – Software Tools (Theme 3)**\
-**Student: Indhu Ayyappan\*\*
+\\BINF\*6210 – Software Tools (Theme 3)\
+*Student: Indhu Ayyappan\*
 
 ------------------------------------------------------------------------
 
@@ -9,8 +9,8 @@
 
 The goal of this assignment was to evaluate whether closely related *Danio* species occupy similar or different geographic regions, using a combined phylogenetic and spatial workflow:
 
--   COI sequences from NCBI → phylogeny\
--   Occurrence records from GBIF → geographic ranges\
+-   COI sequences from NCBI → phylogeny
+-   Occurrence records from GBIF → geographic ranges
 -   Integrated analyses → geophylogeny, sampling intensity, sister-species comparison, richness map
 
 ------------------------------------------------------------------------
@@ -21,12 +21,12 @@ The COI tree recovers multiple well defined *Danio* clades that match previously
 
 ### **Methods**
 
--   Downloaded all *Danio* COI sequences from NCBI\
--   Cleaned & filtered by length (500–800 bp)\
--   Kept longest sequence per species\
--   Aligned using DECIPHER\
--   Built NJ tree (JC69) and rooted with *Microrasbora*\
--   Ladderized and Grafen-transformed for visualization\
+-   Downloaded all *Danio* COI sequences from NCBI
+-   Cleaned & filtered by length (500–800 bp)
+-   Kept longest sequence per species
+-   Aligned using DECIPHER
+-   Built NJ tree (JC69) and rooted with *Microrasbora*
+-   Ladderized and Grafen-transformed for visualization
 -   Visualized with **ggtree**
 
 ![Figure 1: COI Phylogeny](figs/Fig_1.png)
@@ -42,10 +42,10 @@ Species belonging to the same phylogenetic clade tend to cluster in the same geo
 
 ### **Methods**
 
--   Downloaded up to 500 GBIF records per species\
--   Cleaned for coordinate issues, uncertainties, invalid points\
--   Matched species names to tree tip labels\
--   Computed species centroids\
+-   Downloaded up to 500 GBIF records per species
+-   Cleaned for coordinate issues, uncertainties, invalid points
+-   Matched species names to tree tip labels
+-   Computed species centroids
 -   Mapped centroids colored by COI clade
 
 ![Figure 2: Geophylogeny(tree + map)](figs/Fig_2.png)
@@ -61,7 +61,7 @@ Sampling bias exists and must be considered when interpreting geographic pattern
 
 ### **Methods**
 
--   Counted cleaned GBIF records per species\
+-   Counted cleaned GBIF records per species
 -   Ranked species by sampling depth
 
 ![Figure 3: Sampling Intensity Barplot](figs/Fig_3.png)
@@ -78,9 +78,9 @@ Sister pairs were identified directly from the COI phylogeny, and the geographic
 
 ### **Methods**
 
--   Extracted sister pairs from the NJ tree\
--   Computed geographic centroid for each species\
--   Calculated Haversine distance (km)\
+-   Extracted sister pairs from the NJ tree
+-   Computed geographic centroid for each species
+-   Calculated Haversine distance (km)
 -   Drew line segments linking sister species ranges
 
 ![Figure 4: Sister Species Range Connections](figs/Fig_4.png)
@@ -88,10 +88,10 @@ Sister pairs were identified directly from the COI phylogeny, and the geographic
 **Interpretation:**\
 Distances between sister species range from **\~490 km to \~823 km**, indicating:
 
--   Some pairs occupy adjacent or nearby regions → **local diversification**\
+-   Some pairs occupy adjacent or nearby regions → **local diversification**
 -   Others are widely separated → **historical dispersal or range shifts**
 
-Together, this supports **both sympatric and allopatric divergence** within *Danio*.
+Overall, patterns support local diversification (micro-allopatric or parapatric speciation) rather than sympatric divergence.
 
 ------------------------------------------------------------------------
 
@@ -125,7 +125,6 @@ Across all analyses:
 
 ### **Overall Conclusion**
 
-Closely related *Danio* species tend to originate in the same broad region (Indo-Burma) but today occupy adjacent rather than overlapping ranges.\
-This supports a history of **local diversification followed by range separation**, rather than widespread dispersal or strictly sympatric divergence.
+Closely related *Danio* species likely originated in the same Indo-Burma hotspot, followed by local geographic divergence and subsequent range partitioning. Modern distributions show adjacent but non-overlapping ranges, consistent with micro-allopatric or parapatric divergence.No sister species pair shows fully overlapping ranges, so sympatric divergence is not supported by the current dataset.
 
 ------------------------------------------------------------------------

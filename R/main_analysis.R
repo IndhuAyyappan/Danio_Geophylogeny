@@ -1,4 +1,3 @@
-# ================================
 ## BINF*6210 – Assignment 4
 ## Theme 3: Geography & Evolutionary Diversification
 ## Student: Indhu Ayyappan
@@ -7,7 +6,7 @@
 ## Main question:
 ## Do closely related Danio species occur in the same
 ## geographic regions or different regions?
-# ================================
+
 
 #### 1. SETUP ----
 
@@ -192,11 +191,12 @@ p_tree_standalone <- ggtree(tree_plot) +
   )
 
 p_tree_standalone
+# takeaway: COI tree shows several well-supported Danio clades rooted by Microrasbora.
 
 #### 6. GBIF OCCURRENCE DATA ----
 # In this section I pull occurrence records from GBIF for the same Danio species that I used in the COI phylogeny. The goal is to later link range locations to the tips of the tree.
 
-### 6A. BUILD SPECIES LIST FROM PHYLOGENY ----
+# 6A. Build species list from phylogeny
 
 # I use the cleaned QC table (seq_best) to get the full species names
 # that actually made it into the phylogeny (1 sequence per species).
@@ -208,7 +208,7 @@ danio_species <- seq_best %>%
 danio_species
 length(danio_species)   # number of Danio species represented
 
-### 6B. DOWNLOAD GBIF RECORDS PER SPECIES ----
+# 6B. Download GBIF records per species 
 # For each Danio species, I call rgbif::occ_data() and request up to 500 records with coordinates. This is enough for patterns without being huge.
 
 gbif_list <- purrr::map(
@@ -232,7 +232,7 @@ gbif_raw <- dplyr::bind_rows(gbif_list, .id = "species_index") %>%
 dim(gbif_raw)
 dplyr::count(gbif_raw, species_name, name = "n_records_raw")
 
-### 6C. BASIC GBIF CLEANING ----
+# 6C.Basic GBIF cleaning
 # Here I clean out obviously bad points so the maps are interpretable:
 #   - remove NAs and (0,0) points
 #   - drop records with big coordinate uncertainty
@@ -246,7 +246,7 @@ gbif_clean <- gbif_raw %>%
     is.na(coordinateUncertaintyInMeters) |
       coordinateUncertaintyInMeters <= 50000
   ) %>%
-  # keep sensible basisOfRecord types
+  # keep sensible basis records 
   dplyr::filter(
     basisOfRecord %in% c(
       "HUMAN_OBSERVATION",
@@ -275,7 +275,7 @@ gbif_summary <- gbif_clean %>%
 
 gbif_summary
 
-### 6D. SAVE CLEANED GBIF DATA ----
+# 6D.Save cleaned GBIF data 
 #I save both the cleaned table (all points) and the per-species summary so that I can reuse them later for mapping and for the write-up.
 gbif_clean_file   <- file.path(dir_clean, "danio_gbif_clean.csv")
 gbif_summary_file <- file.path(dir_clean, "danio_gbif_summary.csv")
@@ -290,7 +290,7 @@ readr::write_csv(gbif_summary, gbif_summary_file)
 #   - plot a geophylogeny
 #   - check sampling intensity per species
 
-### 7A. Make GBIF names line up with tree tip labels ----
+# 7A. Make GBIF names line up with tree tip labels 
 # Here I convert GBIF species names to the same label format used in the tree (e.g., “Danio rerio” → “D. rerio”). I also tag each tip with a broad COI 
 gbif_named <- gbif_clean %>%
   # remove BOLD “species” rows
@@ -356,7 +356,7 @@ gbif_centroids <- gbif_phylo %>%
     .groups = "drop"
   )
 
-### 7B. Base map for South / Southeast Asia ----
+# 7B. Base map for South / Southeast Asia 
 # Here I build a cropped world map so plots focus on the Danio region.
 world_df <- map_data("world")
 
@@ -364,7 +364,7 @@ asia_bb <- world_df %>%
   dplyr::filter(long > 60, long < 130,
                 lat  > -10, lat < 40)
 
-### 7C. Occurrence map for Danio species used in the phylogeny ----
+# 7C. Occurrence map for Danio species used in the phylogeny 
 # Map of all cleaned GBIF points + one centroid per species, coloured by clade.
 p_map <- ggplot() +
   geom_polygon(
@@ -418,7 +418,9 @@ p_map <- ggplot() +
     legend.key.height = unit(0.45, "lines")
   )
 
-### 7D. Geophylogeny: tree + map in one figure ----
+# takeaway: occurrences for COI-sampled Danio species are concentrated in South / Southeast Asia, with a core band from eastern India to Thailand.
+
+# 7D. Geophylogeny: tree + map in one figure 
 # Here I stack the tree on top of the map so we can see phylogeny and geography in a single figure.
 p_tree_clean <- ggtree(tree_plot) +
   geom_tiplab(
@@ -437,7 +439,7 @@ p_tree_clean <- ggtree(tree_plot) +
 fig_geophylo <- p_tree_clean / p_map +
   plot_layout(heights = c(1, 1.2))
 
-### 7E. Sampling intensity barplot ----
+# 7E. Sampling intensity barplot 
 #This plot shows how many GBIF records each tree species has. It lets me check whether some species are under-sampled.
 
 gbif_summary_phylo <- gbif_phylo %>%
@@ -461,15 +463,18 @@ fig_sampling <- gbif_summary_phylo %>%
   )
 
 fig_geophylo
+# takeaway: closely related Danio species mostly occur in the Indo-Burman region (NE India, Bangladesh, Myanmar), so phylogeny and geography line up.
 fig_sampling
+# takeaway: GBIF sampling is strongest in NE India / Bangladesh / Myanmar and northern Thailand. The southern and eastern parts of the range are under-sampled.
 
 #### 8. Sister-species geographic separation ----
 #In this section I focus on sister pairs in the tree and ask whether their range centroids are close together or far apart.
 
-### 8A. Use existing tree for sister-pair search ----
+# 8A. Use existing tree for sister-pair search 
 tree <- tree_plot
 
 # Helper to pull out sister pairs where both children are tips
+  
 get_sister_pairs <- function(tree) {
   pairs <- list()
   count <- 1
@@ -487,7 +492,7 @@ get_sister_pairs <- function(tree) {
 sister_pairs <- get_sister_pairs(tree)
 sister_pairs  
 
-### 8B. Centroids for each species used in the phylogeny ----
+# 8B. Centroids for each species used in the phylogeny 
 # Here I take the mean lon/lat per species as a simple range centroid.
 
 centroids <- gbif_phylo %>%
@@ -501,7 +506,7 @@ centroids <- gbif_phylo %>%
 
 rownames(centroids) <- centroids$tip_label
 
-### 8C. Keep only sister pairs where BOTH species have centroids ----
+# 8C. Keep only sister pairs where BOTH species have centroids 
 usable_sisters <- purrr::keep(
   sister_pairs,
   ~ all(.x %in% rownames(centroids))
@@ -509,7 +514,7 @@ usable_sisters <- purrr::keep(
 
 usable_sisters
 
-### 8D. Geographic distance (km) between sister centroids ----
+# 8D. Geographic distance (km) between sister centroids 
 sister_geo_dist <- purrr::map_dfr(
   seq_along(usable_sisters),
   function(i) {
@@ -541,7 +546,7 @@ sister_geo_dist <- sister_geo_dist %>%
     )
   )
 sister_geo_dist
-### 8E. Build line segments between sister centroids ----
+# 8E. Build line segments between sister centroids 
 # I turn each pair into a line segment so they can be drawn on the map.
 sister_lines <- purrr::map_dfr(
   seq_along(usable_sisters),
@@ -564,9 +569,9 @@ sister_lines <- purrr::map_dfr(
 )
 sister_lines
 
-### 8F. Map: sister-pair connections on top of all Danio points ----
+# 8F. Map: sister-pair connections on top of all Danio points 
 # Final plot for this section: all Danio points in the background and coloured lines between each sister pair.fig_sister_map <- ggplot() +
-  
+fig_sister_map <- ggplot() +
   geom_polygon(data = asia_bb,
                aes(x = long, y = lat, group = group),
                fill   = "grey95",
@@ -603,6 +608,8 @@ sister_lines
   )
 
 fig_sister_map
+
+# takeaway: The three sister pairs we identified are all separated by several hundred kilometres. None are strictly sympatric, but the distances vary (≈490–820 km).This pattern is consistent with mostly allopatric divergence, where sister species originated in nearby regions but now occupy distinct ranges.
 
 
 #### 9.SPECIES RICHNESS HEATMAP ----
@@ -665,3 +672,4 @@ p_richness <- ggplot() +
   )
 
 p_richness
+#takeaway: Danio species richness peaks in the Indo-Burman hotspot (up to ~5 species per 1° cell) and drops off sharply to the east and south.
