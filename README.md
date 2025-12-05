@@ -1,7 +1,7 @@
 # Assignment 4 – Geography & Evolutionary Diversification in *Danio*
 
-\\BINF\*6210 – Software Tools (Theme 3)\
-*Student: Indhu Ayyappan\*
+BINF\*6210 – Software Tools (Theme 3)\
+Student: Indhu Ayyappan
 
 ------------------------------------------------------------------------
 
@@ -101,15 +101,15 @@ A clear *Danio* biodiversity hotspot exists in the Indo-Burman region.
 
 ### **Methods**
 
--   Created a 1° × 1° richness grid\
--   Counted distinct species per cell\
+-   Created a 1° × 1° richness grid
+-   Counted distinct species per cell
 -   Visualized with a **magma** heatmap
 
 ![Figure 5: Species Richness Heatmap](figs/Fig_5.png)
 
 **Interpretation:**\
-Richness peaks (up to 5 species per cell) occur in the eastern India–Bangladesh–Myanmar region.\
-Moving east into Thailand or south toward Malaysia, richness sharply drops to 1–2 species per cell.\
+Richness peaks (up to 5 species per cell) occur in the eastern India–Bangladesh–Myanmar region.
+Moving east into Thailand or south toward Malaysia, richness sharply drops to 1–2 species per cell.
 This pattern mirrors the Indo-Burman hotspot seen in the phylogeny and occurrence map.
 
 ------------------------------------------------------------------------
@@ -118,9 +118,9 @@ This pattern mirrors the Indo-Burman hotspot seen in the phylogeny and occurrenc
 
 Across all analyses:
 
--   Most *Danio* clades originate in the Indo-Burman biodiversity hotspot\
--   Geographic clustering aligns strongly with phylogenetic structure\
--   Sister species show a mix of **adjacent ranges and wider separations**\
+-   Most *Danio* clades originate in the Indo-Burman biodiversity hotspot
+-   Geographic clustering aligns strongly with phylogenetic structure
+-   Sister species show a mix of **adjacent ranges and wider separations**
 -   Sampling patterns explain some absences but **do not change the core biogeographic signal**
 
 ### **Overall Conclusion**
