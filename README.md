@@ -1,7 +1,5 @@
-# Assignment 4 – Geography & Evolutionary Diversification in *Danio*
+Geography & Evolutionary Diversification in *Danio*
 
-BINF\*6210 – Software Tools (Theme 3)\
-Student: Indhu Ayyappan
 
 ------------------------------------------------------------------------
 
